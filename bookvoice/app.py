@@ -86,8 +86,37 @@ def get_logs():
     if os.path.exists(Config.LOG_FOLDER):
         for f in os.listdir(Config.LOG_FOLDER):
             if f.startswith('error_'):
-                log_files.append(f)
+                log_files.append({'filename': f})
     return jsonify(log_files), 200
+
+@app.route('/api/logs/<filename>', methods=['GET'])
+def get_log_content(filename):
+    # Security: only allow error_ prefixed files
+    if not filename.startswith('error_') or '..' in filename:
+        return jsonify({'error': 'Invalid filename'}), 400
+
+    log_path = os.path.join(Config.LOG_FOLDER, filename)
+    if not os.path.exists(log_path):
+        return jsonify({'error': 'Log not found'}), 404
+
+    try:
+        with open(log_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return jsonify({'filename': filename, 'content': content}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/task/<task_id>/retry', methods=['POST'])
+def retry_task(task_id):
+    task = get_task(task_id)
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
+
+    if task['status'] != 'failed':
+        return jsonify({'error': 'Only failed tasks can be retried'}), 400
+
+    process_task_async(task_id)
+    return jsonify({'task_id': task_id, 'status': 'pending'}), 200
 
 if __name__ == '__main__':
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)

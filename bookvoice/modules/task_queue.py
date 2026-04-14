@@ -7,6 +7,7 @@ from .translator import Translator
 from .tts import TTSProcessor
 from .pdf_handler import PDFHandler
 from .word_handler import WordHandler
+from .mp3_merger import merge_mp3_files
 
 class TaskQueue:
     def __init__(self):
@@ -26,9 +27,12 @@ class TaskQueue:
 
         update_task_status(task_id, 'processing')
         files = get_files_by_task(task_id)
+        output_mode = task.get('output_mode', 'single')
 
         output_dir = os.path.join(Config.OUTPUT_FOLDER, task_id)
         os.makedirs(output_dir, exist_ok=True)
+
+        all_mp3_paths = []
 
         for file_record in files:
             try:
@@ -56,8 +60,14 @@ class TaskQueue:
 
                 # Update file status
                 if mp3_paths:
-                    main_mp3 = mp3_paths[0]
-                    update_file_status(file_record['id'], 'completed', main_mp3)
+                    if output_mode == 'merged':
+                        # Collect all MP3 paths for merging later
+                        all_mp3_paths.extend(mp3_paths)
+                        update_file_status(file_record['id'], 'completed', mp3_paths[0])
+                    else:
+                        # Single mode: use first MP3 as main
+                        main_mp3 = mp3_paths[0]
+                        update_file_status(file_record['id'], 'completed', main_mp3)
 
             except Exception as e:
                 update_file_status(file_record['id'], 'failed')
@@ -65,11 +75,22 @@ class TaskQueue:
                     raise
                 self._log_error(task_id, file_record['original_path'], str(e))
 
+        # Merge MP3 files if output_mode is 'merged'
+        if output_mode == 'merged' and all_mp3_paths:
+            try:
+                merged_path = os.path.join(output_dir, 'merged.mp3')
+                merge_mp3_files(all_mp3_paths, merged_path)
+                # Update first file record with merged path
+                if files:
+                    update_file_status(files[0]['id'], 'completed', merged_path)
+            except Exception as e:
+                self._log_error(task_id, 'merged.mp3', str(e))
+
         update_task_status(task_id, 'completed')
 
     def _log_error(self, task_id: str, file_path: str, error: str):
-        import logging
         log_file = os.path.join(Config.LOG_FOLDER, f'error_{task_id}.log')
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
         with open(log_file, 'a', encoding='utf-8') as f:
             f.write(f"{file_path}: {error}\n")
 

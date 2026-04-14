@@ -18,6 +18,10 @@ export const downloadTask = (taskId) => {
   return api.get(`/task/${taskId}/download`, { responseType: 'blob' })
 }
 
+export const retryTask = (taskId) => api.post(`/task/${taskId}/retry`)
+
 export const getLogs = () => api.get('/logs')
+
+export const getLogContent = (filename) => api.get(`/logs/${filename}`)
 
 export default api

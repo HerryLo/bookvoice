@@ -33,7 +33,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getTasks, downloadTask } from '../api'
+import { getTasks, downloadTask, retryTask as retryTaskApi } from '../api'
 
 const tasks = ref([])
 const loading = ref(false)
@@ -70,6 +70,16 @@ const downloadFile = async (taskId) => {
     link.click()
   } catch (e) {
     ElMessage.error('下载失败')
+  }
+}
+
+const retryTask = async (taskId) => {
+  try {
+    await retryTaskApi(taskId)
+    ElMessage.success('任务已重新提交')
+    refreshTasks()
+  } catch (e) {
+    ElMessage.error('重试失败')
   }
 }
 
