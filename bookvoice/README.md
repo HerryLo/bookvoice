@@ -15,6 +15,7 @@
 | pdfplumber | 0.5 | 最新 |
 | python-docx | 0.8 | 最新 |
 | googletrans | 3.0.0 | 最新 |
+| pydub | 0.25.0 | 最新 |
 | Werkzeug | 2.0 | 3.0+ |
 
 **推荐 Python 3.11 或 3.12**
@@ -35,6 +36,21 @@
 
 - **Windows 10/11** (使用 Windows 本地 TTS 语音)
 - macOS 和 Linux 需要额外配置 TTS 引擎
+
+### ffmpeg (用于MP3合并)
+
+如果使用"合并MP3"功能，需要安装 ffmpeg：
+
+```bash
+# Windows (使用 Chocolatey)
+choco install ffmpeg
+
+# macOS
+brew install ffmpeg
+
+# Linux (Ubuntu/Debian)
+sudo apt install ffmpeg
+```
 
 ## 快速开始
 
@@ -97,11 +113,19 @@ bookvoice/
 │   ├── App.vue
 │   ├── api/
 │   └── views/
-└── modules/            # Python处理模块
-    ├── ocr.py
-    ├── translator.py
-    ├── tts.py
-    ├── pdf_handler.py
-    ├── word_handler.py
-    └── task_queue.py
+├── modules/            # Python处理模块
+│   ├── ocr.py
+│   ├── translator.py
+│   ├── tts.py
+│   ├── pdf_handler.py
+│   ├── word_handler.py
+│   ├── mp3_merger.py   # MP3合并
+│   └── task_queue.py
+└── tests/              # 单元测试
+    ├── conftest.py
+    ├── test_config.py
+    ├── test_database.py
+    ├── test_handlers.py
+    ├── test_mp3_merger.py
+    └── test_translator.py
 ```
