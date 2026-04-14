@@ -2,7 +2,12 @@ from googletrans import Translator
 
 class Translator:
     def __init__(self):
-        self.translator = Translator()
+        self._translator = None
+
+    def _get_translator(self):
+        if self._translator is None:
+            self._translator = Translator()
+        return self._translator
 
     def is_english(self, text: str) -> bool:
         english_chars = 0
@@ -17,7 +22,8 @@ class Translator:
         if not self.is_english(text):
             return text
         try:
-            result = self.translator.translate(text, src='en', dest='zh-cn')
+            translator = self._get_translator()
+            result = translator.translate(text, src='en', dest='zh-cn')
             return result.text
         except Exception as e:
             print(f"Translation error: {e}")

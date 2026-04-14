@@ -7,7 +7,6 @@ from .translator import Translator
 from .tts import TTSProcessor
 from .pdf_handler import PDFHandler
 from .word_handler import WordHandler
-from .mp3_merger import merge_mp3_files
 
 class TaskQueue:
     def __init__(self):
@@ -78,6 +77,7 @@ class TaskQueue:
         # Merge MP3 files if output_mode is 'merged'
         if output_mode == 'merged' and all_mp3_paths:
             try:
+                from .mp3_merger import merge_mp3_files
                 merged_path = os.path.join(output_dir, 'merged.mp3')
                 merge_mp3_files(all_mp3_paths, merged_path)
                 # Update first file record with merged path
@@ -94,8 +94,16 @@ class TaskQueue:
         with open(log_file, 'a', encoding='utf-8') as f:
             f.write(f"{file_path}: {error}\n")
 
-task_queue = TaskQueue()
+# Lazy initialization - don't create instance at module import time
+_task_queue = None
+
+def get_task_queue():
+    global _task_queue
+    if _task_queue is None:
+        _task_queue = TaskQueue()
+    return _task_queue
 
 def process_task_async(task_id: str):
+    task_queue = get_task_queue()
     thread = threading.Thread(target=task_queue.process_task, args=(task_id,))
     thread.start()

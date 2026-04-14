@@ -1,12 +1,19 @@
 import easyocr
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 class OCRProcessor:
     def __init__(self, languages: List[str] = ['ch_sim', 'en']):
-        self.reader = easyocr.Reader(languages, verbose=False)
+        self.languages = languages
+        self.reader = None
+
+    def _get_reader(self):
+        if self.reader is None:
+            self.reader = easyocr.Reader(self.languages, verbose=False)
+        return self.reader
 
     def extract_text(self, image_path: str) -> List[Tuple[str, Tuple[int, int, int, int]]]:
-        results = self.reader.readtext(image_path)
+        reader = self._get_reader()
+        results = reader.readtext(image_path)
         return results
 
     def extract_structured_text(self, image_path: str) -> str:
