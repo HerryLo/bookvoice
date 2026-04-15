@@ -29,7 +29,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def verify_api_key(f):
-    """API 认证装饰器 - 所有 /api/ 开头的路由需要 X-API-Key header"""
+    # API 认证装饰器 - 所有 /api/ 开头的路由需要 X-API-Key header
     @wraps(f)
     def decorated_function(*args, **kwargs):
         key = request.headers.get('X-API-Key')
@@ -43,12 +43,12 @@ def verify_api_key(f):
 # ---------------------------------------------------------
 @app.route('/')
 def index():
-    """GET / - 返回前端 Vue SPA 入口页面"""
+    # GET / - 返回前端 Vue SPA 入口页面
     return send_file(os.path.join(Config.BASE_DIR, 'static', 'index.html'))
 
 @app.route('/assets/<path:filename>')
 def serve_static(filename):
-    """GET /assets/<filename> - 服务前端构建后的静态资源（JS/CSS/图片等）"""
+    # GET /assets/<filename> - 服务前端构建后的静态资源（JS/CSS/图片等）
     # 实际文件在 static/assets/ 目录下
     return send_file(os.path.join(Config.BASE_DIR, 'static', 'assets', filename))
 
@@ -61,14 +61,14 @@ def serve_static(filename):
 @app.route('/api/tasks', methods=['GET'])
 @verify_api_key
 def get_tasks():
-    """GET /api/tasks - 获取所有任务列表"""
+    # GET /api/tasks - 获取所有任务列表
     tasks = get_all_tasks()
     return jsonify(tasks), 200
 
 @app.route('/api/task/<task_id>', methods=['GET'])
 @verify_api_key
 def get_task_detail(task_id):
-    """GET /api/task/<task_id> - 获取指定任务的详细信息（含关联文件列表）"""
+    # GET /api/task/<task_id> - 获取指定任务的详细信息（含关联文件列表）
     task = get_task(task_id)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
@@ -78,7 +78,7 @@ def get_task_detail(task_id):
 @app.route('/api/task/<task_id>/retry', methods=['POST'])
 @verify_api_key
 def retry_task(task_id):
-    """POST /api/task/<task_id>/retry - 重新执行失败的任务"""
+    # POST /api/task/<task_id>/retry - 重新执行失败的任务
     task = get_task(task_id)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
@@ -90,7 +90,7 @@ def retry_task(task_id):
 @app.route('/api/task/<task_id>/download', methods=['GET'])
 @verify_api_key
 def download_task(task_id):
-    """GET /api/task/<task_id>/download - 下载任务生成的MP3文件（单文件直接返回， 多文件打包ZIP返回）"""
+    # GET /api/task/<task_id>/download - 下载任务生成的MP3文件（单文件直接返回， 多文件打包ZIP返回）
     task = get_task(task_id)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
@@ -112,7 +112,7 @@ def download_task(task_id):
 @app.route('/api/task/<task_id>', methods=['DELETE'])
 @verify_api_key
 def delete_task_api(task_id):
-    """DELETE /api/task/<task_id> - 删除整个任务（同时删除上传文件和生成的MP3，只能删除 completed/failed 状态的任务）"""
+    # DELETE /api/task/<task_id> - 删除整个任务（同时删除上传文件和生成的MP3，只能删除 completed/failed 状态的任务）
     task = get_task(task_id)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
@@ -126,7 +126,7 @@ def delete_task_api(task_id):
 @app.route('/api/file/<int:file_id>', methods=['DELETE'])
 @verify_api_key
 def delete_file_api(file_id):
-    """DELETE /api/file/<file_id> - 删除单个文件（同时删除原文件和MP3，删除后任务无文件时自动删除任务，只能删除 completed/failed 任务的文件）"""
+    # DELETE /api/file/<file_id> - 删除单个文件（同时删除原文件和MP3，删除后任务无文件时自动删除任务，只能删除 completed/failed 任务的文件）
     from modules.database import get_file
     file_record = get_file(file_id)
     if not file_record:
@@ -142,7 +142,7 @@ def delete_file_api(file_id):
 @app.route('/api/upload', methods=['POST'])
 @verify_api_key
 def upload():
-    """POST /api/upload - 上传文件创建新任务（支持多文件，output_mode: single=独立MP3, merged=合并MP3）"""
+    # POST /api/upload - 上传文件创建新任务（支持多文件，output_mode: single=独立MP3, merged=合并MP3）
     files = request.files.getlist('files')
     output_mode = request.form.get('output_mode', 'single')
     if output_mode not in ALLOWED_OUTPUT_MODES:
@@ -166,7 +166,7 @@ def upload():
 @app.route('/api/logs', methods=['GET'])
 @verify_api_key
 def get_logs():
-    """GET /api/logs - 获取所有错误日志文件列表"""
+    # GET /api/logs - 获取所有错误日志文件列表
     log_files = []
     if os.path.exists(Config.LOG_FOLDER):
         for f in os.listdir(Config.LOG_FOLDER):
@@ -177,7 +177,7 @@ def get_logs():
 @app.route('/api/logs/<filename>', methods=['GET'])
 @verify_api_key
 def get_log_content(filename):
-    """GET /api/logs/<filename> - 获取指定错误日志文件内容（仅限 error_ 前缀的文件）"""
+    # GET /api/logs/<filename> - 获取指定错误日志文件内容（仅限 error_ 前缀的文件）
     # 安全检查：只允许读取 error_ 前缀的文件，防止路径遍历
     if not filename.startswith('error_') or '..' in filename:
         return jsonify({'error': 'Invalid filename'}), 400
