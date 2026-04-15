@@ -227,22 +227,49 @@ brew install ffmpeg
 
 ## 依赖安装
 
-项目提供一键安装脚本，自动安装 Python 和 Node.js 依赖：
+> **前提条件**：必须先自行安装 Python 和 Node.js，再运行安装脚本
+
+### 环境要求
+
+| 软件 | 版本要求 | 说明 |
+|-----|---------|------|
+| Python | 3.8+ | 自行下载安装 https://python.org |
+| Node.js | 16+ | 自行下载安装 https://nodejs.org |
+| ffmpeg | 最新 | MP3合并功能必需 |
 
 ### Windows
 
-双击运行 `install.bat`
+1. 确保已安装 Python 和 Node.js
+2. 双击运行 `install.bat`
 
 ### macOS / Linux
 
-```bash
-bash install.sh
-```
+1. 确保已安装 Python 和 Node.js
+2. 运行 `bash install.sh`
 
 安装脚本会自动：
 1. 安装 Python 依赖（使用清华镜像）
 2. 检查 ffmpeg 是否安装
 3. 安装前端 Node.js 依赖
+
+### 前端更新后重新构建
+
+如果修改过前端代码（`frontend/` 目录），需要重新构建：
+
+```bash
+cd frontend
+npm run build   # 输出到 ../static/
+```
+
+---
+
+## 前端服务说明
+
+项目使用 Flask 作为前端静态文件的代理服务器：
+- 前端源码在 `frontend/` 目录
+- 构建后的资源输出到 `static/` 目录
+- Flask 同时提供 API 和前端页面服务
+- 启动 `py app.py` 后访问 http://localhost:5000 即可使用完整功能
 
 ---
 

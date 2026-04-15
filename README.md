@@ -14,11 +14,19 @@
 
 ## 环境要求
 
+### 必须自行安装的软件
+
+> **在运行安装脚本之前，必须先安装以下软件**
+
+| 软件 | 下载地址 |
+|-----|---------|
+| Python | https://python.org |
+| Node.js | https://nodejs.org |
+
 ### Python
 
 | 依赖包 | 最低版本 | 推荐版本 |
 |--------|----------|----------|
-| Python | 3.8+ | 3.11+ |
 | Flask | 2.0 | 3.0+ |
 | deep-translator | 1.0.0 | 最新 |
 | easyocr | 1.4 | 1.7+ |
@@ -32,8 +40,6 @@
 
 | 依赖包 | 最低版本 | 推荐版本 |
 |--------|----------|----------|
-| Node.js | 16+ | 20 LTS |
-| npm | 8+ | 10+ |
 | Vite | 4.0 | 5.0+ |
 | Vue | 3.3 | 3.4+ |
 | Element Plus | 2.3.0 | 2.5+ |
@@ -59,6 +65,15 @@ sudo apt install ffmpeg
 ```
 
 ## 快速开始
+
+### 前置要求
+
+> **必须先自行安装 Python 和 Node.js，再运行安装脚本**
+
+| 软件 | 下载地址 |
+|-----|---------|
+| Python | https://python.org |
+| Node.js | https://nodejs.org |
 
 ### 一键安装依赖
 
@@ -90,13 +105,13 @@ npm install
 #### 3. 构建前端
 
 ```bash
-npm run build
+npm run build   # 输出到 ../static/
 ```
 
 ### 启动应用
 
 ```bash
-cd ..
+cd bookvoice
 python app.py
 ```
 
@@ -105,6 +120,26 @@ python app.py
 打开浏览器访问 http://localhost:5000
 
 > 首次运行 OCR 功能时，easyocr 会下载模型文件（约 300MB），需要网络连接。
+
+---
+
+## 前端服务说明
+
+项目使用 Flask 作为前端静态文件的代理服务器：
+
+- 前端源码在 `frontend/` 目录（Vue3 + Element Plus）
+- 构建后的资源输出到 `static/` 目录
+- Flask 同时提供 API 接口和前端页面服务
+- 启动 `python app.py` 后访问 http://localhost:5000 即可使用完整功能
+
+### 更新前端代码后
+
+如果修改过前端代码（`frontend/src/` 目录），需要重新构建：
+
+```bash
+cd frontend
+npm run build   # 输出到 ../static/
+```
 
 ## API 认证
 
@@ -134,10 +169,10 @@ curl -H "X-API-Key: dev-key-change-me" http://127.0.0.1:5000/api/tasks
 
 ```
 bookvoice/
-├── app.py              # Flask主应用
+├── app.py              # Flask主应用（含前端路由代理）
 ├── config.py           # 配置文件
 ├── requirements.txt    # Python依赖
-├── frontend/           # 前端源码
+├── frontend/           # 前端源码（Vue3 + Element Plus）
 │   ├── index.html
 │   ├── package.json
 │   ├── vite.config.js
@@ -150,7 +185,7 @@ bookvoice/
 │           ├── TaskList.vue
 │           ├── Upload.vue
 │           └── Logs.vue
-├── static/             # 编译后的前端资源
+├── static/             # 编译后的前端资源（由 Flask 代理）
 ├── storage/           # 存储目录
 │   ├── uploads/       # 上传文件
 │   └── outputs/       # 生成的MP3
