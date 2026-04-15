@@ -33,4 +33,6 @@ export const deleteTask = (taskId) => api.delete(`/task/${taskId}`)
 
 export const deleteFile = (fileId) => api.delete(`/file/${fileId}`)
 
+export const getTaskProgress = (taskId) => api.get(`/task/${taskId}/progress`)
+
 export default api
