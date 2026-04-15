@@ -16,7 +16,16 @@
       "Bash(npm install:*)",
       "Bash(npm run:*)",
       "Bash(mv assets/* .)",
-      "Bash(rmdir assets:*)"
+      "Bash(rmdir assets:*)",
+      "Bash(python:*)",
+      "Bash(C:\\\\Users\\\\A\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python311\\\\python.exe:*)",
+      "Bash(mv package.json package-lock.json vite.config.js index.html frontend/)",
+      "Bash(mv src/* frontend/src/)",
+      "Bash(rmdir src:*)",
+      "Bash(mkdir -p \"D:/dev/Claude Code Test/bookvoice/storage\")",
+      "Bash(mv uploads:*)",
+      "Bash(mv outputs:*)",
+      "Bash(python3 -c \"import sys; print\\(sys.version\\)\")"
     ]
   }
 }
