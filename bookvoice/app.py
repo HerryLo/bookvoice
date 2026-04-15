@@ -100,20 +100,34 @@ def retry_task(task_id):
 @app.route('/api/task/<task_id>/download', methods=['GET'])
 @verify_api_key
 def download_task(task_id):
-    # GET /api/task/<task_id>/download - 下载任务生成的MP3文件（单文件直接返回， 多文件打包ZIP返回）
+    # GET /api/task/<task_id>/download - 下载任务生成的MP3文件
+    # single模式：单文件直接返回，多文件打包ZIP
+    # merged模式：返回合并后的单一MP3
     task = get_task(task_id)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
+
     output_dir = os.path.join(Config.OUTPUT_FOLDER, task_id)
     if not os.path.exists(output_dir):
         return jsonify({'error': 'Output not found'}), 404
+
+    output_mode = task.get('output_mode', 'single')
+
+    # merged模式：直接返回合并后的MP3
+    if output_mode == 'merged':
+        merged_path = os.path.join(output_dir, 'merged.mp3')
+        if os.path.exists(merged_path):
+            return send_file(merged_path, as_attachment=True)
+        return jsonify({'error': 'Merged MP3 not found'}), 404
+
+    # single模式：多文件打包ZIP
     files = get_files_by_task(task_id)
     mp3_files = [f['mp3_path'] for f in files if f['mp3_path'] and os.path.exists(f['mp3_path'])]
     if not mp3_files:
         return jsonify({'error': 'No MP3 files found'}), 404
     if len(mp3_files) == 1:
         return send_file(mp3_files[0], as_attachment=True)
-    # 多文件打包为 ZIP
+
     import shutil
     zip_path = os.path.join(Config.OUTPUT_FOLDER, f'{task_id}.zip')
     shutil.make_archive(zip_path.replace('.zip', ''), 'zip', output_dir)
