@@ -17,6 +17,14 @@ class TTSProcessor:
                 self.engine.setProperty('voice', self.voice)
         return self.engine
 
+    def _create_engine(self):
+        # 为每个线程创建独立的引擎（解决Windows COM初始化问题）
+        engine = pyttsx3.init()
+        engine.setProperty('rate', self.rate)
+        if self.voice:
+            engine.setProperty('voice', self.voice)
+        return engine
+
     def text_to_speech(self, text: str, output_path: str):
         engine = self._get_engine()
         engine.save_to_file(text, output_path)
@@ -39,8 +47,14 @@ class TTSProcessor:
 
         def generate_single(segment, output_path):
             if segment.strip():
-                self.text_to_speech(segment, output_path)
-                return output_path
+                # 每个线程创建独立的引擎（解决Windows COM初始化问题）
+                engine = self._create_engine()
+                try:
+                    engine.save_to_file(segment, output_path)
+                    engine.runAndWait()
+                    return output_path
+                finally:
+                    engine.stop()
             return None
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -53,7 +67,7 @@ class TTSProcessor:
             for future, path, processed_count in futures:
                 result = future.result()
                 if result:
-                    mp3_paths.append(path)
+                    mp3_paths.append(result)
                 if progress_callback:
                     progress_callback(processed_count)
 
