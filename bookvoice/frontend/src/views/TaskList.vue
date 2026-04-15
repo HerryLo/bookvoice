@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getTasks, downloadTask, retryTask as retryTaskApi, deleteTask as deleteTaskApi } from '../api'
 
@@ -110,5 +110,22 @@ const handleDeleteTask = async (taskId) => {
   }
 }
 
-onMounted(refreshTasks)
+let refreshInterval = null
+
+onMounted(() => {
+  refreshTasks()
+  // Auto-refresh every 3 seconds for processing tasks
+  refreshInterval = setInterval(() => {
+    const hasProcessing = tasks.value.some(t => t.status === 'processing' || t.status === 'pending')
+    if (hasProcessing) {
+      refreshTasks()
+    }
+  }, 3000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
+})
 </script>
