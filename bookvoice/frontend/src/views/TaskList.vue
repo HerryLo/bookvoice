@@ -9,6 +9,17 @@
         </template>
       </el-table-column>
       <el-table-column prop="output_mode" label="输出模式" width="100" />
+      <el-table-column prop="progress" label="进度" width="150">
+        <template #default="{ row }">
+          <el-progress
+            v-if="row.status === 'processing'"
+            :percentage="row.total_segments > 0 ? Math.round(row.processed_segments / row.total_segments * 100) : 0"
+            :text-inside="true"
+            :stroke-width="12"
+          />
+          <el-tag v-else :type="getStatusType(row.status)">{{ getStatusLabel(row.status) }}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="created_at" label="创建时间" width="180" />
       <el-table-column label="操作">
         <template #default="{ row }">
@@ -39,7 +50,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getTasks, downloadTask, retryTask as retryTaskApi, deleteTask as deleteTaskApi } from '../api'
+import { getTasks, downloadTask, retryTask as retryTaskApi, deleteTask as deleteTaskApi, getTaskProgress } from '../api'
 
 const tasks = ref([])
 const loading = ref(false)
@@ -58,7 +69,21 @@ const refreshTasks = async () => {
   loading.value = true
   try {
     const { data } = await getTasks()
-    tasks.value = data
+    // 获取每个任务的进度
+    const tasksWithProgress = await Promise.all(
+      data.map(async (task) => {
+        if (task.status === 'processing' || task.status === 'pending') {
+          try {
+            const { data: progress } = await getTaskProgress(task.id)
+            return { ...task, ...progress }
+          } catch {
+            return task
+          }
+        }
+        return task
+      })
+    )
+    tasks.value = tasksWithProgress
   } catch (e) {
     ElMessage.error('获取任务列表失败')
   } finally {
