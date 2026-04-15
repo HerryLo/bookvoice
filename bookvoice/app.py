@@ -83,7 +83,19 @@ def get_task_progress(task_id):
     task = get_task(task_id)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
-    return jsonify(db_get_progress(task_id)), 200
+
+    data = db_get_progress(task_id)
+
+    # 计算总体进度百分比：已完成分片数 / 总分片数
+    total_segments = sum(f['total_segments'] for f in data['files'])
+    processed_segments = sum(f['processed_segments'] for f in data['files'])
+
+    if total_segments > 0:
+        data['progress'] = int(processed_segments / total_segments * 100)
+    else:
+        data['progress'] = 0
+
+    return jsonify(data), 200
 
 @app.route('/api/task/<task_id>/retry', methods=['POST'])
 @verify_api_key
