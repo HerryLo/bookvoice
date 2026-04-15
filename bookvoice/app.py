@@ -38,7 +38,7 @@ def index():
 
 @app.route('/assets/<path:filename>')
 def serve_static(filename):
-    return send_file(os.path.join(Config.BASE_DIR, 'static', filename))
+    return send_file(os.path.join(Config.BASE_DIR, 'static', 'assets', filename))
 
 @app.route('/api/upload', methods=['POST'])
 @verify_api_key
