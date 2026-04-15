@@ -52,6 +52,9 @@ def serve_static(filename):
     # 实际文件在 static/assets/ 目录下
     return send_file(os.path.join(Config.BASE_DIR, 'static', 'assets', filename))
 
+# ---------------------------------------------------------
+# API 路由（需要 X-API-Key 认证）
+# ---------------------------------------------------------
 @app.route('/api/upload', methods=['POST'])
 @verify_api_key
 def upload():
@@ -191,6 +194,9 @@ def delete_file_api(file_id):
     delete_file(file_id)
     return jsonify({'message': 'File deleted'}), 200
 
+# ---------------------------------------------------------
+# 启动应用
+# ---------------------------------------------------------
 if __name__ == '__main__':
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(Config.OUTPUT_FOLDER, exist_ok=True)
