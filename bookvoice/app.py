@@ -154,7 +154,14 @@ def upload():
     os.makedirs(upload_dir, exist_ok=True)
     for file in files:
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
+            # 分离原始文件名和扩展名，用 secure_filename 处理文件名部分
+            original_filename = file.filename
+            if '.' in original_filename:
+                name_part = secure_filename(original_filename.rsplit('.', 1)[0])
+                ext_part = original_filename.rsplit('.', 1)[1].lower()
+                filename = f"{name_part}.{ext_part}"
+            else:
+                filename = secure_filename(original_filename)
             filepath = os.path.join(upload_dir, filename)
             file.save(filepath)
             create_file_record(task_id, filepath)
