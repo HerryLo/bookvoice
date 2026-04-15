@@ -54,7 +54,7 @@
 
 ## 数据库变更
 
-### 新增函数 (database.py)
+### 新增函数 (modules/database.py)
 
 ```python
 def get_file(file_id):
@@ -151,12 +151,16 @@ export const deleteFile = (fileId) => api.delete(`/file/${fileId}`)
 ```
 bookvoice/
 ├── app.py                 # 新增 DELETE /api/task/<id>, DELETE /api/file/<id>
-├── database.py            # 新增 delete_task, delete_file, get_file
+├── config.py
 ├── frontend/
 │   └── src/
 │       ├── api/index.js   # 新增 deleteTask, deleteFile
 │       └── views/
 │           └── TaskList.vue  # 添加删除按钮和确认对话框
+├── modules/
+│   ├── database.py        # 新增 delete_task, delete_file, get_file
+│   ├── task_queue.py
+│   └── ...
 ```
 
 ## 安全考虑
