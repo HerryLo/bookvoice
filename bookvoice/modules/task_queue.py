@@ -73,12 +73,12 @@ class TaskQueue:
                 # 更新总段落数
                 update_file_segments(file_record['id'], len(paragraphs))
 
-                # 进度回调函数
+                # 进度回调函数（用于串行处理时的进度更新）
                 def update_progress(processed_count):
                     update_file_progress(file_record['id'], processed_count)
 
-                # 并行TTS生成
-                mp3_paths = self.processors['tts'].text_to_speech_parallel(
+                # 串行TTS生成（Windows环境下pyttsx3并行有COM问题，暂时使用串行）
+                mp3_paths = self.processors['tts'].text_to_speech_segments_with_progress(
                     paragraphs, output_dir, progress_callback=update_progress
                 )
 

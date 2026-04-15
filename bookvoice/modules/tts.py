@@ -40,6 +40,18 @@ class TTSProcessor:
                 mp3_paths.append(output_path)
         return mp3_paths
 
+    def text_to_speech_segments_with_progress(self, segments: list, output_dir: str, progress_callback=None) -> list:
+        # 串行生成MP3，支持进度回调
+        mp3_paths = []
+        for i, segment in enumerate(segments):
+            if segment.strip():
+                output_path = os.path.join(output_dir, f'segment_{i:04d}.mp3')
+                self.text_to_speech(segment, output_path)
+                mp3_paths.append(output_path)
+            if progress_callback:
+                progress_callback(i + 1)
+        return mp3_paths
+
     def text_to_speech_parallel(self, segments: list, output_dir: str, progress_callback=None) -> list:
         # 多线程并行生成MP3
         mp3_paths = []
