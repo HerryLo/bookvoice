@@ -12,9 +12,14 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.config['MAX_CONTENT_LENGTH'] = Config.MAX_CONTENT_LENGTH
 app.logger.setLevel(logging.INFO)
-# Serve static files from /assets URL path
-app.static_folder = 'static'
-app.static_url_path = '/assets'
+
+# ---------------------------------------------------------
+# 前端静态文件服务配置
+# 前端源码在 frontend/ 目录，构建后输出到 static/ 目录
+# Flask 同时提供 API 和前端页面服务
+# ---------------------------------------------------------
+app.static_folder = 'static'           # 静态文件根目录
+app.static_url_path = '/assets'       # 静态文件 URL 前缀
 
 ALLOWED_EXTENSIONS = Config.ALLOWED_EXTENSIONS
 ALLOWED_OUTPUT_MODES = {'single', 'merged'}
@@ -24,6 +29,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def verify_api_key(f):
+    """API 认证装饰器 - 所有 /api/ 开头的路由需要 X-API-Key header"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         key = request.headers.get('X-API-Key')
@@ -32,12 +38,18 @@ def verify_api_key(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ---------------------------------------------------------
+# 前端页面路由
+# ---------------------------------------------------------
 @app.route('/')
 def index():
+    """返回前端 Vue SPA 入口页面"""
     return send_file(os.path.join(Config.BASE_DIR, 'static', 'index.html'))
 
 @app.route('/assets/<path:filename>')
 def serve_static(filename):
+    """服务前端构建后的静态资源（JS/CSS/图片等）"""
+    # 实际文件在 static/assets/ 目录下
     return send_file(os.path.join(Config.BASE_DIR, 'static', 'assets', filename))
 
 @app.route('/api/upload', methods=['POST'])
