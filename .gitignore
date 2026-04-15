@@ -1,5 +1,33 @@
-# Created by pytest automatically.
-bookvoice/node_modules
-*/__pycache__
+# Python
+__pycache__/
 *.pyc
 *.pyo
+*.pyd
+.Python
+
+# Frontend
+bookvoice/node_modules/
+bookvoice/frontend/node_modules/
+
+# Storage (keep folder, ignore contents)
+bookvoice/storage/uploads/*
+bookvoice/storage/outputs/*
+!bookvoice/storage/uploads/.gitkeep
+!bookvoice/storage/outputs/.gitkeep
+
+# Logs
+bookvoice/logs/*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.env.local
