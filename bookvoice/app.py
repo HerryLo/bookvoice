@@ -75,6 +75,16 @@ def get_task_detail(task_id):
     files = get_files_by_task(task_id)
     return jsonify({'task': task, 'files': files}), 200
 
+@app.route('/api/task/<task_id>/progress', methods=['GET'])
+@verify_api_key
+def get_task_progress(task_id):
+    # GET /api/task/<task_id>/progress - 获取任务处理进度
+    from modules.database import get_task_progress as db_get_progress
+    task = get_task(task_id)
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
+    return jsonify(db_get_progress(task_id)), 200
+
 @app.route('/api/task/<task_id>/retry', methods=['POST'])
 @verify_api_key
 def retry_task(task_id):
