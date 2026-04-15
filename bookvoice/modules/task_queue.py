@@ -3,7 +3,7 @@ import atexit
 import os
 from concurrent.futures import ThreadPoolExecutor
 from config import Config
-from modules.database import update_task_status, update_file_status, get_task, get_files_by_task, create_file_record
+from modules.database import update_task_status, update_file_status, get_task, get_files_by_task, create_file_record, update_file_progress, update_file_segments
 from .ocr import OCRProcessor
 from .translator import Translator
 from .tts import TTSProcessor
@@ -70,8 +70,17 @@ class TaskQueue:
                 # 按段落分割文本
                 paragraphs = [p.strip() for p in translated_text.split('\n\n') if p.strip()]
 
-                # 生成MP3音频文件
-                mp3_paths = self.processors['tts'].text_to_speech_segments(paragraphs, output_dir)
+                # 更新总段落数
+                update_file_segments(file_record['id'], len(paragraphs))
+
+                # 进度回调函数
+                def update_progress(processed_count):
+                    update_file_progress(file_record['id'], processed_count)
+
+                # 并行TTS生成
+                mp3_paths = self.processors['tts'].text_to_speech_parallel(
+                    paragraphs, output_dir, progress_callback=update_progress
+                )
 
                 # 更新文件状态
                 if mp3_paths:
@@ -83,6 +92,9 @@ class TaskQueue:
                         # 单文件模式：使用第一个MP3
                         main_mp3 = mp3_paths[0]
                         update_file_status(file_record['id'], 'completed', main_mp3)
+
+                # 确保进度为100%
+                update_file_progress(file_record['id'], len(paragraphs))
 
             except Exception as e:
                 # 记录失败状态，错误处理
