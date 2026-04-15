@@ -134,6 +134,11 @@ def download_task(task_id):
         merged_path = os.path.join(output_dir, 'merged.mp3')
         if os.path.exists(merged_path):
             return send_file(merged_path, as_attachment=True)
+        # Fallback: 单文档merged模式 - 返回第一个完成文件的MP3
+        files = get_files_by_task(task_id)
+        completed_files = [f for f in files if f['mp3_path'] and os.path.exists(f['mp3_path'])]
+        if completed_files:
+            return send_file(completed_files[0]['mp3_path'], as_attachment=True)
         return jsonify({'error': 'Merged MP3 not found'}), 404
 
     # single模式：多文件打包ZIP
