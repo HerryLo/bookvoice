@@ -1,5 +1,7 @@
 import pyttsx3
 import os
+from concurrent.futures import ThreadPoolExecutor
+from config import Config
 
 class TTSProcessor:
     def __init__(self, rate: int = 150, voice: str = None):
@@ -28,4 +30,31 @@ class TTSProcessor:
                 output_path = os.path.join(output_dir, f'segment_{i:04d}.mp3')
                 self.text_to_speech(segment, output_path)
                 mp3_paths.append(output_path)
+        return mp3_paths
+
+    def text_to_speech_parallel(self, segments: list, output_dir: str, progress_callback=None) -> list:
+        # 多线程并行生成MP3
+        mp3_paths = []
+        max_workers = getattr(Config, 'TTS_PARALLEL_WORKERS', 3)
+
+        def generate_single(segment, output_path):
+            if segment.strip():
+                self.text_to_speech(segment, output_path)
+                return output_path
+            return None
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = []
+            for i, segment in enumerate(segments):
+                output_path = os.path.join(output_dir, f'segment_{i:04d}.mp3')
+                future = executor.submit(generate_single, segment, output_path)
+                futures.append((future, output_path, i + 1))
+
+            for future, path, processed_count in futures:
+                result = future.result()
+                if result:
+                    mp3_paths.append(path)
+                if progress_callback:
+                    progress_callback(processed_count)
+
         return mp3_paths
