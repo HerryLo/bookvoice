@@ -43,6 +43,7 @@ class TaskQueue:
         output_dir = os.path.join(Config.OUTPUT_FOLDER, task_id)
         os.makedirs(output_dir, exist_ok=True)
 
+        # 收集所有文档的MP3路径（用于merged模式）
         all_mp3_paths = []
 
         # 遍历任务下所有文件
@@ -67,31 +68,28 @@ class TaskQueue:
                 # 翻译为中文
                 translated_text = self.processors['translator'].translate_to_chinese(text)
 
-                # 按段落分割文本
+                # 按段落分割文本（分片处理，避免超长文本导致TTS失败）
                 paragraphs = [p.strip() for p in translated_text.split('\n\n') if p.strip()]
 
-                # 更新总段落数
+                # 更新文件总段落数
                 update_file_segments(file_record['id'], len(paragraphs))
 
-                # 进度回调函数（用于串行处理时的进度更新）
+                # 进度回调函数
                 def update_progress(processed_count):
                     update_file_progress(file_record['id'], processed_count)
 
-                # 串行TTS生成（Windows环境下pyttsx3并行有COM问题，暂时使用串行）
+                # 串行TTS生成（Windows环境下pyttsx3并行有COM问题，使用串行）
                 mp3_paths = self.processors['tts'].text_to_speech_segments_with_progress(
                     paragraphs, output_dir, progress_callback=update_progress
                 )
 
-                # 更新文件状态
+                # 文档内合并：将该文档的所有分片MP3合并成一个
                 if mp3_paths:
-                    if output_mode == 'merged':
-                        # 合并模式：收集所有MP3路径
-                        all_mp3_paths.extend(mp3_paths)
-                        update_file_status(file_record['id'], 'completed', mp3_paths[0])
-                    else:
-                        # 单文件模式：使用第一个MP3
-                        main_mp3 = mp3_paths[0]
-                        update_file_status(file_record['id'], 'completed', main_mp3)
+                    from .mp3_merger import merge_mp3_files
+                    doc_mp3 = os.path.join(output_dir, f'{file_record["id"]}.mp3')
+                    merge_mp3_files(mp3_paths, doc_mp3)
+                    all_mp3_paths.append(doc_mp3)
+                    update_file_status(file_record['id'], 'completed', doc_mp3)
 
                 # 确保进度为100%
                 update_file_progress(file_record['id'], len(paragraphs))
@@ -103,13 +101,13 @@ class TaskQueue:
                     raise
                 self._log_error(task_id, file_record['original_path'], str(e))
 
-        # 合并模式：合并所有MP3文件
-        if output_mode == 'merged' and all_mp3_paths:
+        # merged模式：文档间合并
+        if output_mode == 'merged' and len(all_mp3_paths) > 1:
             try:
                 from .mp3_merger import merge_mp3_files
                 merged_path = os.path.join(output_dir, 'merged.mp3')
                 merge_mp3_files(all_mp3_paths, merged_path)
-                # 更新第一个文件记录为合并后的MP3
+                # 更新第一个文件的mp3_path为合并后的路径
                 if files:
                     update_file_status(files[0]['id'], 'completed', merged_path)
             except Exception as e:
