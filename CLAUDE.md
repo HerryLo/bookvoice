@@ -63,6 +63,34 @@ bookvoice/
 
 ---
 
+## 代码注释规范
+
+### Python 代码注释
+- 使用 `#` 作为注释开头，**禁止使用 `"""` docstring 形式**
+- 每个函数/方法需要添加注释说明功能
+- API 路由注释格式：`# HTTP方法 /api/路径 - 功能描述`
+
+```python
+# GET /api/tasks - 获取所有任务列表
+def get_tasks():
+    tasks = get_all_tasks()
+    return jsonify(tasks), 200
+
+# POST /api/upload - 上传文件创建新任务
+def upload():
+    files = request.files.getlist('files')
+    ...
+```
+
+### API 路由分组
+按功能将 API 路由分组，每组用分隔注释标记：
+- `# ---------- 任务相关 ----------`
+- `# ---------- 文件相关 ----------`
+- `# ---------- 上传相关 ----------`
+- `# ---------- 日志相关 ----------`
+
+---
+
 ## 技术栈
 
 ### Python 依赖
