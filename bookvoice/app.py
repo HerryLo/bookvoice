@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import os
 import uuid
+import logging
 from werkzeug.utils import secure_filename
 from config import Config
 from database import init_db, create_task, create_file_record, get_all_tasks, get_task, get_files_by_task
@@ -8,20 +9,40 @@ from modules.task_queue import process_task_async
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.config['MAX_CONTENT_LENGTH'] = Config.MAX_CONTENT_LENGTH
+app.logger.setLevel(logging.INFO)
+# Serve static files from /assets URL path
+app.static_folder = 'static'
+app.static_url_path = '/assets'
 
 ALLOWED_EXTENSIONS = Config.ALLOWED_EXTENSIONS
+ALLOWED_OUTPUT_MODES = {'single', 'merged'}
+API_KEY = os.environ.get('BOOKVOICE_API_KEY', 'dev-key-change-me')
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def verify_api_key():
+    key = request.headers.get('X-API-Key')
+    if key != API_KEY:
+        return jsonify({'error': 'Unauthorized'}), 401
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return send_file(os.path.join(Config.BASE_DIR, 'static', 'index.html'))
+
+@app.route('/assets/<path:filename>')
+def serve_static(filename):
+    return send_file(os.path.join(Config.BASE_DIR, 'static', filename))
 
 @app.route('/api/upload', methods=['POST'])
+@verify_api_key
 def upload():
     files = request.files.getlist('files')
     output_mode = request.form.get('output_mode', 'single')
+
+    if output_mode not in ALLOWED_OUTPUT_MODES:
+        return jsonify({'error': 'Invalid output_mode'}), 400
 
     if not files:
         return jsonify({'error': 'No files uploaded'}), 400
@@ -43,11 +64,13 @@ def upload():
     return jsonify({'task_id': task_id}), 200
 
 @app.route('/api/tasks', methods=['GET'])
+@verify_api_key
 def get_tasks():
     tasks = get_all_tasks()
     return jsonify(tasks), 200
 
 @app.route('/api/task/<task_id>', methods=['GET'])
+@verify_api_key
 def get_task_detail(task_id):
     task = get_task(task_id)
     if not task:
@@ -56,6 +79,7 @@ def get_task_detail(task_id):
     return jsonify({'task': task, 'files': files}), 200
 
 @app.route('/api/task/<task_id>/download', methods=['GET'])
+@verify_api_key
 def download_task(task_id):
     task = get_task(task_id)
     if not task:
@@ -81,6 +105,7 @@ def download_task(task_id):
     return send_file(zip_path, as_attachment=True)
 
 @app.route('/api/logs', methods=['GET'])
+@verify_api_key
 def get_logs():
     log_files = []
     if os.path.exists(Config.LOG_FOLDER):
@@ -90,6 +115,7 @@ def get_logs():
     return jsonify(log_files), 200
 
 @app.route('/api/logs/<filename>', methods=['GET'])
+@verify_api_key
 def get_log_content(filename):
     # Security: only allow error_ prefixed files
     if not filename.startswith('error_') or '..' in filename:
@@ -104,9 +130,11 @@ def get_log_content(filename):
             content = f.read()
         return jsonify({'filename': filename, 'content': content}), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Failed to read log file {filename}: {e}")
+        return jsonify({'error': 'Failed to read log file'}), 500
 
 @app.route('/api/task/<task_id>/retry', methods=['POST'])
+@verify_api_key
 def retry_task(task_id):
     task = get_task(task_id)
     if not task:
@@ -123,4 +151,4 @@ if __name__ == '__main__':
     os.makedirs(Config.OUTPUT_FOLDER, exist_ok=True)
     os.makedirs(Config.LOG_FOLDER, exist_ok=True)
     init_db()
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)

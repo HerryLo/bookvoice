@@ -25,6 +25,11 @@ def merge_mp3_files(mp3_paths: list, output_path: str) -> str:
     # Load all MP3 files
     combined = AudioSegment.empty()
 
+    # Check for missing files before merging
+    missing_files = [p for p in mp3_paths if not os.path.exists(p)]
+    if missing_files:
+        print(f"Warning: {len(missing_files)} MP3 files missing during merge: {missing_files}")
+
     for mp3_path in mp3_paths:
         if os.path.exists(mp3_path):
             audio = AudioSegment.from_mp3(mp3_path)

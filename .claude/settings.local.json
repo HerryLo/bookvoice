@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python -m pytest tests/test_translator.py -v)",
+      "Bash(python -m pip install pytest -q)",
+      "Bash(pip --version)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)",
+      "Bash(where python:*)",
+      "Bash(C:\\\\Users\\\\A\\\\AppData\\\\Local\\\\WindowsApps\\\\python.exe:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(py:*)",
+      "Bash(npm --version)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(mv assets/* .)",
+      "Bash(rmdir assets:*)"
+    ]
+  }
+}

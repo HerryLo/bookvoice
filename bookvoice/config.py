@@ -2,8 +2,9 @@ import os
 
 class Config:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
-    OUTPUT_FOLDER = os.path.join(BASE_DIR, 'outputs')
+    STORAGE_FOLDER = os.path.join(BASE_DIR, 'storage')
+    UPLOAD_FOLDER = os.path.join(STORAGE_FOLDER, 'uploads')
+    OUTPUT_FOLDER = os.path.join(STORAGE_FOLDER, 'outputs')
     LOG_FOLDER = os.path.join(BASE_DIR, 'logs')
     DATABASE = os.path.join(BASE_DIR, 'bookvoice.db')
 

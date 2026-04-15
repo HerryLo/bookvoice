@@ -1,5 +1,7 @@
 import threading
+import atexit
 import os
+from concurrent.futures import ThreadPoolExecutor
 from config import Config
 from database import update_task_status, update_file_status, get_task, get_files_by_task, create_file_record
 from .ocr import OCRProcessor
@@ -7,6 +9,8 @@ from .translator import Translator
 from .tts import TTSProcessor
 from .pdf_handler import PDFHandler
 from .word_handler import WordHandler
+
+MAX_WORKERS = 3
 
 class TaskQueue:
     def __init__(self):
@@ -86,7 +90,14 @@ class TaskQueue:
             except Exception as e:
                 self._log_error(task_id, 'merged.mp3', str(e))
 
-        update_task_status(task_id, 'completed')
+        # Check if any files were successfully processed
+        files = get_files_by_task(task_id)
+        any_success = any(f['status'] == 'completed' for f in files)
+
+        if any_success:
+            update_task_status(task_id, 'completed')
+        else:
+            update_task_status(task_id, 'failed')
 
     def _log_error(self, task_id: str, file_path: str, error: str):
         log_file = os.path.join(Config.LOG_FOLDER, f'error_{task_id}.log')
@@ -103,7 +114,13 @@ def get_task_queue():
         _task_queue = TaskQueue()
     return _task_queue
 
+_executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+
+def _shutdown_executor():
+    _executor.shutdown(wait=True)
+
+atexit.register(_shutdown_executor)
+
 def process_task_async(task_id: str):
     task_queue = get_task_queue()
-    thread = threading.Thread(target=task_queue.process_task, args=(task_id,))
-    thread.start()
+    _executor.submit(task_queue.process_task, task_id)

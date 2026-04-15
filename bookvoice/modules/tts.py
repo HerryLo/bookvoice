@@ -19,6 +19,7 @@ class TTSProcessor:
         engine = self._get_engine()
         engine.save_to_file(text, output_path)
         engine.runAndWait()
+        engine.stop()  # Clean up engine resources
 
     def text_to_speech_segments(self, segments: list, output_dir: str) -> list:
         mp3_paths = []

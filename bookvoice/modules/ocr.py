@@ -20,6 +20,6 @@ class OCRProcessor:
         results = self.extract_text(image_path)
         lines = []
         for (bbox, text, confidence) in results:
-            if confidence > 0.3 and text.strip():
+            if confidence > 0.5 and text.strip():
                 lines.append(text.strip())
         return '\n'.join(lines)

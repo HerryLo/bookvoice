@@ -45,6 +45,9 @@ def init_db():
                 FOREIGN KEY (task_id) REFERENCES tasks(id)
             )
         ''')
+        # Create indexes for better query performance
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_files_task_id ON files(task_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)')
 
 def create_task(filename: str, output_mode: str = 'single') -> str:
     task_id = str(uuid.uuid4())

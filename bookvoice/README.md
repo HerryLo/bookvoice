@@ -14,7 +14,7 @@
 | pyttsx3 | 2.90 | 最新 |
 | pdfplumber | 0.5 | 最新 |
 | python-docx | 0.8 | 最新 |
-| googletrans | 3.0.0 | 最新 |
+| deep-translator | 1.0.0 | 最新 |
 | pydub | 0.25.0 | 最新 |
 | Werkzeug | 2.0 | 3.0+ |
 
@@ -64,6 +64,7 @@ pip install -r requirements.txt
 ### 2. 安装 Node.js 依赖
 
 ```bash
+cd frontend
 npm install
 ```
 
@@ -76,12 +77,15 @@ npm run build
 ### 4. 启动应用
 
 ```bash
+cd ..
 python app.py
 ```
 
 ### 5. 访问
 
 打开浏览器访问 http://localhost:5000
+
+> 首次运行 OCR 功能时，easyocr 会下载模型文件（约 300MB），需要网络连接。
 
 ## 版本检查命令
 
@@ -104,28 +108,32 @@ bookvoice/
 ├── config.py           # 配置文件
 ├── database.py         # 数据库模型
 ├── requirements.txt    # Python依赖
-├── package.json        # Node.js依赖
-├── vite.config.js      # Vite配置
-├── index.html          # Vue入口
-├── templates/          # Flask模板
-├── src/                # Vue源码
-│   ├── main.js
-│   ├── App.vue
-│   ├── api/
-│   └── views/
+├── frontend/           # 前端源码
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   └── src/
+│       ├── main.js
+│       ├── App.vue
+│       ├── api/
+│       └── views/
+├── static/             # 编译后的前端资源
+├── storage/            # 存储目录
+│   ├── uploads/        # 上传文件
+│   └── outputs/        # 生成的MP3
 ├── modules/            # Python处理模块
 │   ├── ocr.py
 │   ├── translator.py
 │   ├── tts.py
 │   ├── pdf_handler.py
 │   ├── word_handler.py
-│   ├── mp3_merger.py   # MP3合并
+│   ├── mp3_merger.py
 │   └── task_queue.py
-└── tests/              # 单元测试
-    ├── conftest.py
-    ├── test_config.py
-    ├── test_database.py
-    ├── test_handlers.py
-    ├── test_mp3_merger.py
-    └── test_translator.py
+├── logs/               # 错误日志
+├── tests/              # 单元测试
+│   ├── conftest.py
+│   ├── test_config.py
+│   ├── test_database.py
+│   └── test_translator.py
+└── bookvoice.db        # SQLite数据库
 ```
