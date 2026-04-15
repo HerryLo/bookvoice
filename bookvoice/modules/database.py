@@ -43,9 +43,20 @@ def init_db():
                 original_path TEXT NOT NULL,
                 mp3_path TEXT,
                 status TEXT DEFAULT 'pending',
+                processed_segments INTEGER DEFAULT 0,
+                total_segments INTEGER DEFAULT 0,
                 FOREIGN KEY (task_id) REFERENCES tasks(id)
             )
         ''')
+        # 迁移：确保新字段存在（兼容已有数据库）
+        try:
+            cursor.execute('ALTER TABLE files ADD COLUMN processed_segments INTEGER DEFAULT 0')
+        except:
+            pass  # 字段已存在
+        try:
+            cursor.execute('ALTER TABLE files ADD COLUMN total_segments INTEGER DEFAULT 0')
+        except:
+            pass  # 字段已存在
         # Create indexes for better query performance
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_files_task_id ON files(task_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)')
@@ -62,8 +73,8 @@ def create_task(filename: str, output_mode: str = 'single') -> str:
 def create_file_record(task_id: str, original_path: str) -> int:
     with get_db_cursor() as cursor:
         cursor.execute(
-            'INSERT INTO files (task_id, original_path) VALUES (?, ?)',
-            (task_id, original_path)
+            'INSERT INTO files (task_id, original_path, processed_segments, total_segments) VALUES (?, ?, ?, ?)',
+            (task_id, original_path, 0, 0)
         )
         return cursor.lastrowid
 
@@ -165,3 +176,42 @@ def delete_task(task_id: str) -> bool:
         cursor.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
 
     return True
+
+# ---------- 进度相关 ----------
+
+def update_file_segments(file_id: int, total_segments: int):
+    # 更新文件总段落数
+    with get_db_cursor() as cursor:
+        cursor.execute(
+            'UPDATE files SET total_segments = ? WHERE id = ?',
+            (total_segments, file_id)
+        )
+
+def update_file_progress(file_id: int, processed_segments: int):
+    # 更新文件已处理段落数
+    with get_db_cursor() as cursor:
+        cursor.execute(
+            'UPDATE files SET processed_segments = ? WHERE id = ?',
+            (processed_segments, file_id)
+        )
+
+def get_task_progress(task_id: str) -> dict:
+    # 获取任务进度信息
+    task = get_task(task_id)
+    if not task:
+        return None
+    files = get_files_by_task(task_id)
+    return {
+        'task_id': task_id,
+        'status': task['status'],
+        'files': [
+            {
+                'id': f['id'],
+                'original_path': f['original_path'],
+                'total_segments': f['total_segments'] or 0,
+                'processed_segments': f['processed_segments'] or 0,
+                'status': f['status']
+            }
+            for f in files
+        ]
+    }
