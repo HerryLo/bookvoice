@@ -5,7 +5,7 @@ import uuid
 import logging
 from werkzeug.utils import secure_filename
 from config import Config
-from modules.database import init_db, create_task, create_file_record, get_all_tasks, get_task, get_files_by_task
+from modules.database import init_db, create_task, create_file_record, get_all_tasks, get_task, get_files_by_task, delete_task, delete_file
 from modules.task_queue import process_task_async
 
 app = Flask(__name__)
@@ -150,6 +150,34 @@ def retry_task(task_id):
 
     process_task_async(task_id)
     return jsonify({'task_id': task_id, 'status': 'pending'}), 200
+
+@app.route('/api/task/<task_id>', methods=['DELETE'])
+@verify_api_key
+def delete_task_api(task_id):
+    task = get_task(task_id)
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
+
+    if task['status'] not in ('completed', 'failed'):
+        return jsonify({'error': 'Cannot delete task in processing'}), 400
+
+    delete_task(task_id)
+    return jsonify({'message': 'Task deleted'}), 200
+
+@app.route('/api/file/<int:file_id>', methods=['DELETE'])
+@verify_api_key
+def delete_file_api(file_id):
+    from modules.database import get_file
+    file_record = get_file(file_id)
+    if not file_record:
+        return jsonify({'error': 'File not found'}), 404
+
+    task = get_task(file_record['task_id'])
+    if not task or task['status'] not in ('completed', 'failed'):
+        return jsonify({'error': 'Cannot delete file from task in processing'}), 400
+
+    delete_file(file_id)
+    return jsonify({'message': 'File deleted'}), 200
 
 if __name__ == '__main__':
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)

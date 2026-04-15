@@ -24,6 +24,12 @@
             size="small"
             @click="retryTask(row.id)"
           >重试</el-button>
+          <el-button
+            v-if="row.status === 'completed' || row.status === 'failed'"
+            type="danger"
+            size="small"
+            @click="handleDeleteTask(row.id)"
+          >删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -32,8 +38,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { getTasks, downloadTask, retryTask as retryTaskApi } from '../api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getTasks, downloadTask, retryTask as retryTaskApi, deleteTask as deleteTaskApi } from '../api'
 
 const tasks = ref([])
 const loading = ref(false)
@@ -80,6 +86,27 @@ const retryTask = async (taskId) => {
     refreshTasks()
   } catch (e) {
     ElMessage.error('重试失败')
+  }
+}
+
+const handleDeleteTask = async (taskId) => {
+  try {
+    await ElMessageBox.confirm(
+      '确定删除吗？此操作不可恢复',
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    await deleteTaskApi(taskId)
+    ElMessage.success('删除成功')
+    refreshTasks()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
   }
 }
 

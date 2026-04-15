@@ -24,4 +24,8 @@ export const getLogs = () => api.get('/logs')
 
 export const getLogContent = (filename) => api.get(`/logs/${filename}`)
 
+export const deleteTask = (taskId) => api.delete(`/task/${taskId}`)
+
+export const deleteFile = (fileId) => api.delete(`/file/${fileId}`)
+
 export default api

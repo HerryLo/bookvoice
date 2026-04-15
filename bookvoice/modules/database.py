@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import uuid
 from datetime import datetime
@@ -107,3 +108,60 @@ def get_files_by_task(task_id: str) -> list:
     with get_db_cursor() as cursor:
         cursor.execute('SELECT * FROM files WHERE task_id = ?', (task_id,))
         return [dict(row) for row in cursor.fetchall()]
+
+def get_file(file_id: int) -> dict:
+    """获取单个文件记录"""
+    with get_db_cursor() as cursor:
+        cursor.execute('SELECT * FROM files WHERE id = ?', (file_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+def delete_file(file_id: int) -> bool:
+    """删除单个文件及其物理文件"""
+    import shutil
+    file_record = get_file(file_id)
+    if not file_record:
+        return False
+
+    # 删除上传的原文件
+    if file_record['original_path'] and os.path.exists(file_record['original_path']):
+        os.remove(file_record['original_path'])
+
+    # 删除生成的MP3
+    if file_record['mp3_path'] and os.path.exists(file_record['mp3_path']):
+        os.remove(file_record['mp3_path'])
+
+    # 从数据库删除记录
+    with get_db_cursor() as cursor:
+        cursor.execute('DELETE FROM files WHERE id = ?', (file_id,))
+
+    # 检查任务是否还有其他文件
+    remaining = get_files_by_task(file_record['task_id'])
+    if not remaining:
+        delete_task(file_record['task_id'])
+
+    return True
+
+def delete_task(task_id: str) -> bool:
+    """删除任务及其所有文件和目录"""
+    import shutil
+    task = get_task(task_id)
+    if not task:
+        return False
+
+    # 删除上传目录
+    upload_dir = os.path.join(Config.UPLOAD_FOLDER, task_id)
+    if os.path.exists(upload_dir):
+        shutil.rmtree(upload_dir)
+
+    # 删除输出目录
+    output_dir = os.path.join(Config.OUTPUT_FOLDER, task_id)
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+
+    # 删除数据库记录（先删文件再删任务，因为有外键）
+    with get_db_cursor() as cursor:
+        cursor.execute('DELETE FROM files WHERE task_id = ?', (task_id,))
+        cursor.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+
+    return True
