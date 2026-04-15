@@ -1,10 +1,11 @@
+from functools import wraps
 from flask import Flask, render_template, request, jsonify, send_file
 import os
 import uuid
 import logging
 from werkzeug.utils import secure_filename
 from config import Config
-from database import init_db, create_task, create_file_record, get_all_tasks, get_task, get_files_by_task
+from modules.database import init_db, create_task, create_file_record, get_all_tasks, get_task, get_files_by_task
 from modules.task_queue import process_task_async
 
 app = Flask(__name__)
@@ -22,10 +23,14 @@ API_KEY = os.environ.get('BOOKVOICE_API_KEY', 'dev-key-change-me')
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def verify_api_key():
-    key = request.headers.get('X-API-Key')
-    if key != API_KEY:
-        return jsonify({'error': 'Unauthorized'}), 401
+def verify_api_key(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        key = request.headers.get('X-API-Key')
+        if key != API_KEY:
+            return jsonify({'error': 'Unauthorized'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/')
 def index():

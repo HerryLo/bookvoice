@@ -3,7 +3,7 @@ import atexit
 import os
 from concurrent.futures import ThreadPoolExecutor
 from config import Config
-from database import update_task_status, update_file_status, get_task, get_files_by_task, create_file_record
+from modules.database import update_task_status, update_file_status, get_task, get_files_by_task, create_file_record
 from .ocr import OCRProcessor
 from .translator import Translator
 from .tts import TTSProcessor

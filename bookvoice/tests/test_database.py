@@ -55,7 +55,7 @@ class TestDatabase:
 
     def test_create_task_returns_uuid(self):
         """Test that create_task returns a valid UUID string"""
-        from database import create_task
+        from modules.database import create_task
 
         task_id = create_task('test_file.pdf', 'single')
 
@@ -65,7 +65,7 @@ class TestDatabase:
 
     def test_get_task_returns_task_dict(self):
         """Test that get_task returns correct task data"""
-        from database import create_task, get_task
+        from modules.database import create_task, get_task
 
         task_id = create_task('test.pdf', 'single')
         task = get_task(task_id)
@@ -78,14 +78,14 @@ class TestDatabase:
 
     def test_get_task_returns_none_for_invalid_id(self):
         """Test that get_task returns None for non-existent task"""
-        from database import get_task
+        from modules.database import get_task
 
         task = get_task('non-existent-id')
         assert task is None
 
     def test_get_all_tasks_returns_list(self):
         """Test that get_all_tasks returns a list"""
-        from database import create_task, get_all_tasks
+        from modules.database import create_task, get_all_tasks
 
         # Create multiple tasks
         create_task('file1.pdf', 'single')
@@ -98,7 +98,7 @@ class TestDatabase:
 
     def test_create_file_record(self):
         """Test that create_file_record creates a file record"""
-        from database import create_task, create_file_record, get_files_by_task
+        from modules.database import create_task, create_file_record, get_files_by_task
 
         task_id = create_task('test.pdf', 'single')
         file_id = create_file_record(task_id, '/path/to/file.pdf')
@@ -112,7 +112,7 @@ class TestDatabase:
 
     def test_update_task_status_to_completed(self):
         """Test updating task status to completed"""
-        from database import create_task, update_task_status, get_task
+        from modules.database import create_task, update_task_status, get_task
 
         task_id = create_task('test.pdf', 'single')
         update_task_status(task_id, 'completed')
@@ -123,7 +123,7 @@ class TestDatabase:
 
     def test_update_task_status_to_failed(self):
         """Test updating task status to failed with error message"""
-        from database import create_task, update_task_status, get_task
+        from modules.database import create_task, update_task_status, get_task
 
         task_id = create_task('test.pdf', 'single')
         update_task_status(task_id, 'failed', 'Test error message')
@@ -134,7 +134,7 @@ class TestDatabase:
 
     def test_update_file_status(self):
         """Test updating file status with mp3 path"""
-        from database import create_task, create_file_record, update_file_status, get_files_by_task
+        from modules.database import create_task, create_file_record, update_file_status, get_files_by_task
 
         task_id = create_task('test.pdf', 'single')
         file_id = create_file_record(task_id, '/path/to/file.pdf')
