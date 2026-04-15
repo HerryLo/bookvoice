@@ -107,6 +107,10 @@ def download_task(task_id):
     if not task:
         return jsonify({'error': 'Task not found'}), 404
 
+    # 安全检查：防止路径遍历攻击
+    if '..' in task_id or '/' in task_id or '\\' in task_id:
+        return jsonify({'error': 'Invalid task_id'}), 400
+
     output_dir = os.path.join(Config.OUTPUT_FOLDER, task_id)
     if not os.path.exists(output_dir):
         return jsonify({'error': 'Output not found'}), 404
