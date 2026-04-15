@@ -58,6 +58,8 @@ bookvoice/
 │   ├── test_config.py
 │   ├── test_database.py
 │   └── test_translator.py
+├── install.bat              # Windows 一键安装脚本
+├── install.sh               # macOS/Linux 一键安装脚本
 └── bookvoice.db           # SQLite数据库
 ```
 
@@ -220,6 +222,27 @@ choco install ffmpeg
 # macOS
 brew install ffmpeg
 ```
+
+---
+
+## 依赖安装
+
+项目提供一键安装脚本，自动安装 Python 和 Node.js 依赖：
+
+### Windows
+
+双击运行 `install.bat`
+
+### macOS / Linux
+
+```bash
+bash install.sh
+```
+
+安装脚本会自动：
+1. 安装 Python 依赖（使用清华镜像）
+2. 检查 ffmpeg 是否安装
+3. 安装前端 Node.js 依赖
 
 ---
 

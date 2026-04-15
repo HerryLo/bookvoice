@@ -60,34 +60,47 @@ sudo apt install ffmpeg
 
 ## 快速开始
 
-### 1. 安装 Python 依赖
+### 一键安装依赖
+
+**Windows:** 双击运行 `install.bat`
+
+**macOS / Linux:**
+```bash
+bash install.sh
+```
+
+> 安装脚本会自动检查 ffmpeg，如未安装会给出提示
+
+### 手动安装（可选）
+
+#### 1. 安装 Python 依赖
 
 ```bash
 cd bookvoice
-pip install -r requirements.txt
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-### 2. 安装 Node.js 依赖
+#### 2. 安装 Node.js 依赖
 
 ```bash
 cd frontend
 npm install
 ```
 
-### 3. 构建前端
+#### 3. 构建前端
 
 ```bash
 npm run build
 ```
 
-### 4. 启动应用
+### 启动应用
 
 ```bash
 cd ..
 python app.py
 ```
 
-### 5. 访问
+### 访问
 
 打开浏览器访问 http://localhost:5000
 
@@ -152,6 +165,8 @@ bookvoice/
 │   └── mp3_merger.py  # MP3合并
 ├── logs/              # 错误日志
 ├── tests/             # 单元测试
+├── install.bat        # Windows 一键安装脚本
+├── install.sh         # macOS/Linux 一键安装脚本
 └── bookvoice.db       # SQLite数据库
 ```
 
