@@ -156,11 +156,14 @@ def upload():
         if file and allowed_file(file.filename):
             # 分离原始文件名和扩展名，用 secure_filename 处理文件名部分
             original_filename = file.filename
-            if '.' in original_filename:
-                name_part = secure_filename(original_filename.rsplit('.', 1)[0])
-                ext_part = original_filename.rsplit('.', 1)[1].lower()
+            parts = original_filename.rsplit('.', 1)
+            if len(parts) == 2 and parts[1].lower() in ALLOWED_EXTENSIONS:
+                # 有扩展名且扩展名合法
+                name_part = secure_filename(parts[0]) or 'file'
+                ext_part = parts[1].lower()
                 filename = f"{name_part}.{ext_part}"
             else:
+                # 无扩展名或扩展名不合法，使用原文件名
                 filename = secure_filename(original_filename)
             filepath = os.path.join(upload_dir, filename)
             file.save(filepath)
