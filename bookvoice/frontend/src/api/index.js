@@ -1,12 +1,17 @@
 import axios from 'axios'
 
+const API_KEY = import.meta.env.VITE_API_KEY || 'dev-key-change-me'
+
 const api = axios.create({
-  baseURL: '/api'
+  baseURL: '/api',
+  headers: {
+    'X-API-Key': API_KEY
+  }
 })
 
 export const uploadFiles = (formData) => {
   return api.post('/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': 'multipart/form-data', 'X-API-Key': API_KEY }
   })
 }
 
