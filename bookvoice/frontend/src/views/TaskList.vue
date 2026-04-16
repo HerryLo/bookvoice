@@ -1,6 +1,7 @@
 <template>
   <div>
     <el-button @click="refreshTasks" :loading="loading">刷新</el-button>
+    <el-button @click="handleClearAll" type="danger" plain>清空全部</el-button>
     <el-table :data="tasks" stripe style="width: 100%; margin-top: 20px">
       <el-table-column prop="filename" label="文件名" width="200" />
       <el-table-column prop="status" label="状态" width="120">
@@ -50,7 +51,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getTasks, downloadTask, retryTask as retryTaskApi, deleteTask as deleteTaskApi, getTaskProgress } from '../api'
+import { getTasks, downloadTask, retryTask as retryTaskApi, deleteTask as deleteTaskApi, getTaskProgress, clearTasks } from '../api'
 
 const tasks = ref([])
 const loading = ref(false)
@@ -131,6 +132,23 @@ const handleDeleteTask = async (taskId) => {
   } catch (e) {
     if (e !== 'cancel') {
       ElMessage.error('删除失败')
+    }
+  }
+}
+
+const handleClearAll = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定清空所有已完成/失败的任务吗？此操作不可恢复',
+      '清空确认',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+    )
+    await clearTasks()
+    ElMessage.success('清空成功')
+    refreshTasks()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('清空失败')
     }
   }
 }
