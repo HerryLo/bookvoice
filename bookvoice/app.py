@@ -5,7 +5,7 @@ import uuid
 import logging
 from werkzeug.utils import secure_filename
 from config import Config
-from modules.database import init_db, create_task, create_file_record, get_all_tasks, get_task, get_files_by_task, delete_task, delete_file
+from modules.database import init_db, create_task, create_file_record, get_all_tasks, get_task, get_files_by_task, delete_task, delete_file, get_db
 from modules.task_queue import process_task_async
 
 app = Flask(__name__)
@@ -215,6 +215,44 @@ def upload():
             create_file_record(task_id, filepath)
     process_task_async(task_id)
     return jsonify({'task_id': task_id}), 200
+
+# ---------- 工具相关 ----------
+
+@app.route('/api/tasks', methods=['DELETE'])
+@verify_api_key
+def clear_tasks():
+    # DELETE /api/tasks - 清空所有已完成/失败的任务
+    # 删除数据库记录、上传文件、生成的MP3
+    import shutil
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        # 获取所有已完成/失败的任务
+        cursor.execute("SELECT id FROM tasks WHERE status IN ('completed', 'failed')")
+        tasks = cursor.fetchall()
+
+        deleted_count = 0
+        for (task_id,) in tasks:
+            # 删除上传文件
+            upload_dir = os.path.join(Config.UPLOAD_FOLDER, task_id)
+            if os.path.exists(upload_dir):
+                shutil.rmtree(upload_dir, ignore_errors=True)
+            # 删除输出文件
+            output_dir = os.path.join(Config.OUTPUT_FOLDER, task_id)
+            if os.path.exists(output_dir):
+                shutil.rmtree(output_dir, ignore_errors=True)
+            # 删除数据库文件记录
+            cursor.execute('DELETE FROM files WHERE task_id = ?', (task_id,))
+            # 删除任务记录
+            cursor.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+            deleted_count += 1
+
+        conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({'message': f'已清空 {deleted_count} 个任务'}), 200
 
 # ---------- 日志相关 ----------
 
