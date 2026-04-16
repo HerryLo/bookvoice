@@ -201,9 +201,14 @@ def get_task_progress(task_id: str) -> dict:
     if not task:
         return None
     files = get_files_by_task(task_id)
+    # 计算总进度（顶层字段供前端直接访问）
+    total_segments = sum(f['total_segments'] or 0 for f in files)
+    processed_segments = sum(f['processed_segments'] or 0 for f in files)
     return {
         'task_id': task_id,
         'status': task['status'],
+        'total_segments': total_segments,
+        'processed_segments': processed_segments,
         'files': [
             {
                 'id': f['id'],

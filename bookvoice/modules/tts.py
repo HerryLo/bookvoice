@@ -26,10 +26,13 @@ class TTSProcessor:
         return engine
 
     def text_to_speech(self, text: str, output_path: str):
-        engine = self._get_engine()
-        engine.save_to_file(text, output_path)
-        engine.runAndWait()
-        engine.stop()  # Clean up engine resources
+        # 每次在当前线程创建独立引擎（解决Windows COM跨线程问题）
+        engine = self._create_engine()
+        try:
+            engine.save_to_file(text, output_path)
+            engine.runAndWait()
+        finally:
+            engine.stop()  # 释放引擎资源
 
     def text_to_speech_segments(self, segments: list, output_dir: str) -> list:
         mp3_paths = []

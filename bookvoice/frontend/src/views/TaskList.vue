@@ -13,7 +13,7 @@
         <template #default="{ row }">
           <el-progress
             v-if="row.status === 'processing'"
-            :percentage="row.total_segments > 0 ? Math.round(row.processed_segments / row.total_segments * 100) : 0"
+            :percentage="row.progress || 0"
             :text-inside="true"
             :stroke-width="12"
           />
