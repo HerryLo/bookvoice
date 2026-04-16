@@ -6,19 +6,6 @@
 配置文件：`D:\dev\Claude Code Test\CLAUDE.md`
 项目文档：`D:\dev\Claude Code Test\README.md`
 
-## 项目概述
-
-将图片、PDF、Word文档中的文字识别后转换为语音MP3文件。
-
-### 功能特性
-- OCR文字识别（easyocr）
-- 英文→中文翻译（deep-translator）
-- 文字转语音（pyttsx3 Windows TTS）
-- MP3合并功能
-- 批量处理
-- 任务管理（自动刷新）
-- 删除功能（任务/文件）
-
 ---
 
 ## 项目结构
@@ -45,22 +32,22 @@ bookvoice/
 │   ├── database.py          # 数据库操作
 │   ├── task_queue.py        # 任务队列（ThreadPoolExecutor）
 │   ├── ocr.py               # OCR处理
-│   ├── translator.py        # 翻译（deep-translator）
-│   ├── tts.py              # TTS处理
-│   ├── pdf_handler.py      # PDF处理
-│   ├── word_handler.py     # Word处理
-│   └── mp3_merger.py       # MP3合并
-├── storage/                 # 存储目录
-│   ├── uploads/            # 上传文件
-│   └── outputs/            # 生成的MP3
-├── logs/                    # 错误日志
-├── tests/                   # 单元测试
+│   ├── translator.py         # 翻译（deep-translator）
+│   ├── tts.py               # TTS处理
+│   ├── pdf_handler.py       # PDF处理
+│   ├── word_handler.py      # Word处理
+│   └── mp3_merger.py        # MP3合并
+├── storage/                  # 存储目录
+│   ├── uploads/             # 上传文件
+│   └── outputs/             # 生成的MP3
+├── logs/                     # 错误日志
+├── tests/                    # 单元测试
 │   ├── test_config.py
 │   ├── test_database.py
 │   └── test_translator.py
-├── install.bat              # Windows 一键安装脚本
-├── install.sh               # macOS/Linux 一键安装脚本
-└── bookvoice.db           # SQLite数据库
+├── install.bat               # Windows 一键安装脚本
+├── install.sh                # macOS/Linux 一键安装脚本
+└── bookvoice.db            # SQLite数据库
 ```
 
 ---
@@ -125,11 +112,12 @@ curl -H "X-API-Key: dev-key-change-me" http://127.0.0.1:5000/api/tasks
 ### 主要 API 端点
 
 | 方法 | 路径 | 说明 |
-|-----|------|-----|
+|-----|------|------|
 | GET | /api/tasks | 获取任务列表 |
 | GET | /api/task/<id> | 获取任务详情（含文件列表） |
-| POST | /api/upload | 上传文件 |
-| GET | /api/task/<id>/download | 下载MP3 |
+| GET | /api/task/<id>/progress | 获取任务处理进度（含百分比） |
+| POST | /api/upload | 上传文件（支持 output_mode: single/merged） |
+| GET | /api/task/<id>/download | 下载MP3（single=ZIP, merged=单一MP3） |
 | POST | /api/task/<id>/retry | 重试失败任务 |
 | DELETE | /api/task/<id> | 删除任务（只能删除completed/failed） |
 | DELETE | /api/file/<id> | 删除单个文件 |
@@ -156,10 +144,35 @@ curl -H "X-API-Key: dev-key-change-me" http://127.0.0.1:5000/api/tasks
 - `original_path` TEXT
 - `mp3_path` TEXT
 - `status` TEXT
+- `total_segments` INTEGER（总分片数，用于进度计算）
+- `processed_segments` INTEGER（已处理分片数，用于进度计算）
 
 ### 索引
-- `idx_files_task_id` ON files(task_id)
+- `idx_files_task_id` ON files(task_id)`
 - `idx_tasks_status` ON tasks(status)
+
+---
+
+## 输出模式说明
+
+### Single 模式（默认）
+1. 每个文档按 `\n\n` 分割成段落，分片 TTS 生成 MP3
+2. 同一文档内的分片 MP3 合并成该文档的单一 MP3
+3. 下载时：单文档返回单个 MP3，多文档打包 ZIP
+
+### Merged 模式
+1. 每个文档按 Single 模式各自处理（分片 → TTS → 文档内合并）
+2. 收集所有文档的 MP3 路径
+3. 所有 MP3 合并成一个大 MP3（`merged.mp3`）
+4. 下载时：直接返回这一个合并后的 MP3
+
+### 进度计算
+```
+进度 = Σ(每个文件的 processed_segments) / Σ(每个文件的 total_segments) × 100%
+```
+- TTS 每完成一个分片更新一次进度
+- 文档内合并完成后进度为 100%
+- Merged 模式文档间合并完成后进度为 100%
 
 ---
 
@@ -177,117 +190,3 @@ curl -H "X-API-Key: dev-key-change-me" http://127.0.0.1:5000/api/tasks
 | SKIP_ON_ERROR | True | 错误时跳过继续 |
 | TTS_RATE | 150 | 语音速率 |
 | TTS_VOICE | Windows注册表路径 | 语音引擎 |
-
----
-
-## 启动应用
-
-```bash
-cd D:\dev\Claude Code Test\bookvoice
-py app.py
-```
-
-访问 http://localhost:5000
-
----
-
-## 前端构建
-
-```bash
-cd D:\dev\Claude Code Test\bookvoice\frontend
-npm install
-npm run build   # 输出到 ../static/
-```
-
----
-
-## 测试
-
-```bash
-cd D:\dev\Claude Code Test\bookvoice
-py -m pytest tests/ -v
-```
-
----
-
-## 首次运行
-
-- **OCR模型下载**：easyocr 首次运行会下载模型文件（约300MB）
-- **ffmpeg**：MP3合并功能需要安装 ffmpeg
-
-```bash
-# Windows
-choco install ffmpeg
-
-# macOS
-brew install ffmpeg
-```
-
----
-
-## 依赖安装
-
-> **前提条件**：必须先自行安装 Python 和 Node.js，再运行安装脚本
-
-### 环境要求
-
-| 软件 | 版本要求 | 说明 |
-|-----|---------|------|
-| Python | 3.8+ | 自行下载安装 https://python.org |
-| Node.js | 16+ | 自行下载安装 https://nodejs.org |
-| ffmpeg | 最新 | MP3合并功能必需 |
-
-### Windows
-
-1. 确保已安装 Python 和 Node.js
-2. 双击运行 `install.bat`
-
-### macOS / Linux
-
-1. 确保已安装 Python 和 Node.js
-2. 运行 `bash install.sh`
-
-安装脚本会自动：
-1. 安装 Python 依赖（使用清华镜像）
-2. 检查 ffmpeg 是否安装
-3. 安装前端 Node.js 依赖
-
-### 前端更新后重新构建
-
-如果修改过前端代码（`frontend/` 目录），需要重新构建：
-
-```bash
-cd frontend
-npm run build   # 输出到 ../static/
-```
-
----
-
-## 前端服务说明
-
-项目使用 Flask 作为前端静态文件的代理服务器：
-- 前端源码在 `frontend/` 目录
-- 构建后的资源输出到 `static/` 目录
-- Flask 同时提供 API 和前端页面服务
-- 启动 `py app.py` 后访问 http://localhost:5000 即可使用完整功能
-
----
-
-## 常见问题
-
-### Python 版本
-- 推荐 Python 3.11 或 3.12
-- Python 3.14 兼容（pydub 延迟导入已处理）
-
-### TTS 语音
-- 仅支持 Windows（使用系统语音）
-- 语音路径：`HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_ZH-CN_HUIHUI_11.0`
-
-### 任务一直显示"处理中"
-- 任务在后台异步处理
-- 任务列表会自动刷新（每3秒）
-- 处理完成后状态会更新为"已完成"或"失败"
-
-### API 返回 401 Unauthorized
-- 前端已配置默认 API Key：`dev-key-change-me`
-- 可通过环境变量 `BOOKVOICE_API_KEY` 修改
