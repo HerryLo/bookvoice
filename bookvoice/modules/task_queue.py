@@ -5,7 +5,6 @@ from concurrent.futures import ThreadPoolExecutor
 from config import Config
 from modules.database import update_task_status, update_file_status, get_task, get_files_by_task, create_file_record, update_file_progress, update_file_segments
 from .ocr import OCRProcessor
-from .translator import Translator
 from .tts import TTSProcessor
 from .pdf_handler import PDFHandler
 from .word_handler import WordHandler
@@ -16,18 +15,17 @@ MAX_WORKERS = 3
 # ---------- 任务处理器 ----------
 
 class TaskQueue:
-    # 初始化处理器实例（OCR、翻译、TTS、PDF、Word）
+    # 初始化处理器实例（OCR、TTS、PDF、Word）
     def __init__(self):
         self.processors = {
             'ocr': OCRProcessor(),
-            'translator': Translator(),
             'tts': TTSProcessor(rate=Config.TTS_RATE, voice=Config.TTS_VOICE),
             'pdf': PDFHandler(),
             'word': WordHandler(),
         }
         self.processing = False
 
-    # 处理单个任务：OCR识别 → 翻译 → TTS生成MP3 → 合并（如需要）
+    # 处理单个任务：OCR识别 → TTS生成MP3 → 合并（如需要）
     def process_task(self, task_id: str):
         # 获取任务信息，任务不存在则直接返回
         task = get_task(task_id)
@@ -65,11 +63,10 @@ class TaskQueue:
                 else:
                     raise ValueError(f"Unsupported file type: {ext}")
 
-                # 翻译为中文
-                translated_text = self.processors['translator'].translate_to_chinese(text)
-
                 # 按段落分割文本（分片处理，避免超长文本导致TTS失败）
-                paragraphs = [p.strip() for p in translated_text.split('\n\n') if p.strip()]
+                paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+
+                print("按段落分割文本：", paragraphs)
 
                 # 更新文件总段落数
                 update_file_segments(file_record['id'], len(paragraphs))
