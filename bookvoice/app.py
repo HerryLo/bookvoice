@@ -285,6 +285,22 @@ def get_log_content(filename):
         app.logger.error(f"Failed to read log file {filename}: {e}")
         return jsonify({'error': 'Failed to read log file'}), 500
 
+@app.route('/api/logs', methods=['DELETE'])
+@verify_api_key
+def clear_logs():
+    # DELETE /api/logs - 清空所有错误日志
+    if not os.path.exists(Config.LOG_FOLDER):
+        return jsonify({'message': '日志目录为空'}), 200
+
+    deleted_count = 0
+    for filename in os.listdir(Config.LOG_FOLDER):
+        if filename.startswith('error_'):
+            log_path = os.path.join(Config.LOG_FOLDER, filename)
+            os.remove(log_path)
+            deleted_count += 1
+
+    return jsonify({'message': f'已清空 {deleted_count} 个日志文件'}), 200
+
 # ---------------------------------------------------------
 # 启动应用
 # ---------------------------------------------------------
